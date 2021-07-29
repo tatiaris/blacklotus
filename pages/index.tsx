@@ -1,18 +1,15 @@
-import Link from 'next/link'
+import { useState } from "react"
 
 export default function Home() {
+  const [roomId, setRoomId] = useState('');
+  const goToRoom = () => {
+    location.href = `/room/${roomId}`;
+  }
+
   return (
-    <ul>
-      <li>
-        <Link href="/a" as="/a">
-          <a>a</a>
-        </Link>
-      </li>
-      <li>
-        <Link href="/b" as="/b">
-          <a>b</a>
-        </Link>
-      </li>
-    </ul>
+    <div>
+      <input onChange={e => setRoomId(e.target.value)} type="text" placeholder="room id" />
+      <button onClick={goToRoom}>submit</button>
+    </div>
   )
 }
