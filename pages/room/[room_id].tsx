@@ -13,7 +13,7 @@ export const Room = () => {
   const [username, setUsername] = useState('');
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState<string[]>([]);
-  const socket = io("http://localhost:3000");
+  const socket = io();
 
   const sendMessage = () => {
     socket.emit("message", { room_id: room_id, username: username, content: message });
