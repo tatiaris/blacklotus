@@ -38,7 +38,7 @@ const app: Express = express();
 const server: http.Server = http.createServer(app);
 const io: socketio.Server = new socketio.Server(server, {
     cors: {
-        origin: "https://boardgames-rho.vercel.app/",
+        origin: ["https://boardgames-rho.vercel.app", "http://localhost:3000"],
         methods: ["GET", "POST"],
         allowedHeaders: ["my-custom-header"],
         credentials: true
