@@ -74,7 +74,7 @@ io.on('connection', (socket: socketio.Socket) => {
 
     socket.on('message', (messageObj: messageParams) => {
         const { room_id, username, content } = messageObj;
-        socket.in(room_id).emit('new_message', content);
+        socket.to(room_id).emit('new_message', content);
         console.log(`new_message from ${username} in room ${room_id}: ${content}`);
     })
 
