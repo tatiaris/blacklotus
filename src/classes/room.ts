@@ -13,11 +13,24 @@ export class Room {
   getUid = () => this.uid
   setUid = (newUid: string) => { this.uid = newUid }
 
+  getPlayer = (id: string): Player => this.players.get(id) || new Player(id, this.players.get(id)?.getUid() || "temp_uid")
+  updatePlayerUsername = (playerId: string, newPlayerId: string) => {
+    if (this.players.has(newPlayerId)) {
+      let i = 1;
+      while (this.players.has(newPlayerId + i)) i++;
+      newPlayerId += i;
+    }
+    this.players.get(playerId)?.setUsername(newPlayerId);
+    this.players.set(newPlayerId, this.getPlayer(playerId));
+    this.players.delete(playerId);
+  }
+
   getPlayers = () => this.players
   addPlayer = (newPlayer: Player) => { this.players.set(newPlayer.getUsername(), newPlayer) }
   removePlayer = (playerId: string) => { this.players.delete(playerId) }
 
   isEmpty = () => this.players.size === 0
+  getTotalPlayers = () => this.players.size;
 
   toString = () => {
     let playersToString = "";

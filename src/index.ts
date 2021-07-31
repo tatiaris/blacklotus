@@ -14,9 +14,22 @@ interface messageParams {
     username: string;
     content: string;
 }
+interface updateUsernameParams {
+    room_id: string;
+    username: string;
+    newUsername: string;
+}
 interface playerInfoParams {
     room_id: string;
     username: string;
+}
+interface PlayerObj {
+    username: string;
+    admin: boolean;
+}
+interface roomJsonObj {
+    totalPlayers: number;
+    players: Array<PlayerObj>;
 }
 
 let playerUidMap = new Map<string, playerInfoParams>();
@@ -33,6 +46,21 @@ const printRoomMap = () => {
 //     playerUidMap.forEach((info, uid) => console.log(`${uid} is in room ${info.room_id}`));
 //     console.log("************  Player Room Map END  ************")
 // }
+
+const roomToJson = (room: Room | undefined) => {
+    let roomJson = <roomJsonObj>{};
+    if (room){
+        roomJson.totalPlayers = room.getTotalPlayers();
+        roomJson.players = [];
+        room.getPlayers().forEach(player => {
+            roomJson.players.push({
+                username: player.getUsername(),
+                admin: player.isAdmin()
+            })
+        })
+    }
+    return roomJson;
+}
 
 const app: Express = express();
 const server: http.Server = http.createServer(app);
@@ -63,19 +91,29 @@ io.on('connection', (socket: socketio.Socket) => {
         else {
             username = "player0";
             console.log(`creating new room ${room_id}`);
-            roomMap.set(room_id, new Room(room_id, new Player(username, socket.id)))
+            roomMap.set(room_id, new Room(room_id, new Player(username, socket.id, true)))
         }
         console.log(`user ${username} joined room ${room_id}`);
         playerUidMap.set(socket.id, { room_id, username });
         socket.join(room_id);
         socket.emit("joined_room", username);
+        io.in(room_id).emit('room_update', roomToJson(roomMap.get(room_id)));
         printRoomMap();
     })
 
     socket.on('message', (messageObj: messageParams) => {
         const { room_id, username, content } = messageObj;
-        io.in(room_id).emit('new_message', content);
+        io.in(room_id).emit('new_message', { username, content });
         console.log(`new_message from ${username} in room ${room_id}: ${content}`);
+    })
+
+    socket.on('update_username', (updateUsernameObj: updateUsernameParams) => {
+        const { room_id, username, newUsername } = updateUsernameObj;
+        roomMap.get(room_id)?.updatePlayerUsername(username, newUsername);
+        playerUidMap.set(socket.id, { username: newUsername, room_id: room_id });
+        socket.emit('username_updated', newUsername);
+        io.in(room_id).emit('room_update', roomToJson(roomMap.get(room_id)));
+        printRoomMap();
     })
 
     socket.on('disconnect', () => {
@@ -92,6 +130,7 @@ io.on('connection', (socket: socketio.Socket) => {
             }
             playerUidMap.delete(playerUid)
             printRoomMap();
+            io.in(roomId).emit('room_update', roomToJson(roomMap.get(roomId)));
         }
     })
 });
