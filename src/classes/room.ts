@@ -14,7 +14,7 @@ export class Room {
   setUid = (newUid: string) => { this.uid = newUid }
 
   getPlayer = (id: string): Player => this.players.get(id) || new Player(id, this.players.get(id)?.getUid() || "temp_uid")
-  updatePlayerUsername = (playerId: string, newPlayerId: string) => {
+  updatePlayerUsername = (playerId: string, newPlayerId: string): string => {
     if (this.players.has(newPlayerId)) {
       let i = 1;
       while (this.players.has(newPlayerId + i)) i++;
@@ -23,6 +23,7 @@ export class Room {
     this.players.get(playerId)?.setUsername(newPlayerId);
     this.players.set(newPlayerId, this.getPlayer(playerId));
     this.players.delete(playerId);
+    return newPlayerId;
   }
 
   getPlayers = () => this.players

@@ -109,9 +109,9 @@ io.on('connection', (socket: socketio.Socket) => {
 
     socket.on('update_username', (updateUsernameObj: updateUsernameParams) => {
         const { room_id, username, newUsername } = updateUsernameObj;
-        roomMap.get(room_id)?.updatePlayerUsername(username, newUsername);
-        playerUidMap.set(socket.id, { username: newUsername, room_id: room_id });
-        socket.emit('username_updated', newUsername);
+        const newUsernameAdjusted = roomMap.get(room_id)?.updatePlayerUsername(username, newUsername);
+        playerUidMap.set(socket.id, { username: newUsernameAdjusted || "error", room_id: room_id });
+        socket.emit('username_updated', newUsernameAdjusted);
         io.in(room_id).emit('room_update', roomToJson(roomMap.get(room_id)));
         printRoomMap();
     })
