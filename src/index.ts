@@ -1,79 +1,15 @@
 import express, { Express, Request, Response } from 'express';
 import * as http from 'http';
 import * as socketio from 'socket.io';
-import { Player } from './classes/player';
-import { Room } from './classes/room';
+import { Admin } from './classes/admin';
+import { socketioConfig } from './constants';
+import { handle_create_room, handle_disconnect, handle_join_room, handle_message, handle_update_username } from './functions/general';
 
 const port: number = parseInt(process.env.PORT || '8888', 10);
-
-interface connectionParams {
-    room_id: string;
-}
-interface messageParams {
-    room_id: string;
-    username: string;
-    content: string;
-}
-interface updateUsernameParams {
-    room_id: string;
-    username: string;
-    newUsername: string;
-}
-interface playerInfoParams {
-    room_id: string;
-    username: string;
-}
-interface PlayerObj {
-    username: string;
-    admin: boolean;
-}
-interface roomJsonObj {
-    totalPlayers: number;
-    players: Array<PlayerObj>;
-}
-
-let playerUidMap = new Map<string, playerInfoParams>();
-let roomMap = new Map<string, Room>();
-
-const printRoomMap = () => {
-    console.log("************ Rooms Status START ************")
-    roomMap.forEach(room => console.log(room.toString()));
-    console.log("************  Rooms Status END  ************")
-}
-
-const generateRoomId = () => {
-    let id = 1000 + Math.round(Math.random()*100);
-    while (roomMap.has(id.toString())) id += Math.round(Math.random()*10 + 1);
-    return id.toString();
-}
-
-const roomToJson = (room: Room | undefined) => {
-    let roomJson = <roomJsonObj>{};
-    if (room){
-        roomJson.totalPlayers = room.getTotalPlayers();
-        roomJson.players = [];
-        room.getPlayers().forEach(player => {
-            roomJson.players.push({
-                username: player.getUsername(),
-                admin: player.isAdmin()
-            })
-        })
-    }
-    return roomJson;
-}
-
+const admin = new Admin();
 const app: Express = express();
 const server: http.Server = http.createServer(app);
-const io: socketio.Server = new socketio.Server(server, {
-    pingInterval: 1000,
-    pingTimeout: 1000,
-    cors: {
-        origin: ["https://boardgames-rho.vercel.app", "http://localhost:3000"],
-        methods: ["GET", "POST"],
-        allowedHeaders: ["my-custom-header"],
-        credentials: true
-    }
-});
+const io: socketio.Server = new socketio.Server(server, socketioConfig);
 io.attach(server);
 
 app.get('/ping', async (_: Request, res: Response) => {
@@ -81,61 +17,11 @@ app.get('/ping', async (_: Request, res: Response) => {
 });
 
 io.on('connection', (socket: socketio.Socket) => {
-    socket.on('create_room', (gameId: string) => {
-        console.log(`creating new ${gameId} game room`);
-        const room_id = generateRoomId();
-        roomMap.set(room_id, new Room(room_id));
-        socket.emit('room_created', room_id);
-    })
-    socket.on('join_room', (param: connectionParams) => {
-        const { room_id } = param;
-        let username = "player";
-        if (roomMap.has(room_id)) {
-            let i = 0;
-            while (roomMap.get(room_id)?.players.has(username + i)) i++;
-            username += i;
-            roomMap.get(room_id)?.addPlayer(new Player(username, socket.id));
-            console.log(`user ${username} joined room ${room_id}`);
-            playerUidMap.set(socket.id, { room_id, username });
-            socket.join(room_id);
-            socket.emit("joined_room", username);
-            io.in(room_id).emit('room_update', roomToJson(roomMap.get(room_id)));
-            printRoomMap();
-        }
-    })
-
-    socket.on('message', (param: messageParams) => {
-        const { room_id, username, content } = param;
-        io.in(room_id).emit('new_message', { username, content });
-        console.log(`new_message from ${username} in room ${room_id}: ${content}`);
-    })
-
-    socket.on('update_username', (param: updateUsernameParams) => {
-        const { room_id, username, newUsername } = param;
-        const newUsernameAdjusted = roomMap.get(room_id)?.updatePlayerUsername(username, newUsername);
-        playerUidMap.set(socket.id, { username: newUsernameAdjusted || "error", room_id: room_id });
-        socket.emit('username_updated', newUsernameAdjusted);
-        io.in(room_id).emit('room_update', roomToJson(roomMap.get(room_id)));
-        printRoomMap();
-    })
-
-    socket.on('disconnect', () => {
-        const playerUid = socket.id;
-        if (playerUidMap.get(playerUid)) {
-            const roomId = playerUidMap.get(playerUid)?.room_id || "";
-            const playerUsername = playerUidMap.get(playerUid)?.username || "";
-
-            console.log(`removing ${playerUsername} from room ${roomId}`)
-
-            roomMap.get(roomId)?.removePlayer(playerUsername);
-            if (roomMap.get(roomId)?.isEmpty()) {
-                roomMap.delete(roomId)
-            }
-            playerUidMap.delete(playerUid)
-            printRoomMap();
-            io.in(roomId).emit('room_update', roomToJson(roomMap.get(roomId)));
-        }
-    })
+    socket.on('create_room', (gameId: string) => handle_create_room(gameId, socket, admin));
+    socket.on('join_room', (param) => handle_join_room(param, io, socket, admin));
+    socket.on('message', (param) => handle_message(param, io));
+    socket.on('update_username', (param) => handle_update_username(param, io, socket, admin));
+    socket.on('disconnect', () => handle_disconnect(io, socket, admin));
 });
 
 server.listen(port, () => {
