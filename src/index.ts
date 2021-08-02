@@ -65,6 +65,8 @@ const roomToJson = (room: Room | undefined) => {
 const app: Express = express();
 const server: http.Server = http.createServer(app);
 const io: socketio.Server = new socketio.Server(server, {
+    pingInterval: 1000,
+    pingTimeout: 1000,
     cors: {
         origin: ["https://boardgames-rho.vercel.app", "http://localhost:3000"],
         methods: ["GET", "POST"],
