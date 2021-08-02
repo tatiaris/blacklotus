@@ -4,10 +4,10 @@ export class Room {
   uid: string;
   players: Map<string, Player>;
 
-  constructor(uid: string, initialPlayer: Player) {
+  constructor(uid: string, initialPlayer?: Player) {
     this.uid = uid;
     this.players = new Map<string, Player>();
-    this.players.set(initialPlayer.getUsername(), initialPlayer);
+    if (initialPlayer) this.players.set(initialPlayer.getUsername(), initialPlayer);
   }
 
   getUid = () => this.uid

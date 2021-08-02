@@ -41,11 +41,11 @@ const printRoomMap = () => {
     console.log("************  Rooms Status END  ************")
 }
 
-// const printUidInfoMap = () => {
-//     console.log("************ Player Room Map START ************")
-//     playerUidMap.forEach((info, uid) => console.log(`${uid} is in room ${info.room_id}`));
-//     console.log("************  Player Room Map END  ************")
-// }
+const generateRoomId = () => {
+    let id = 1000 + Math.round(Math.random()*100);
+    while (roomMap.has(id.toString())) id += Math.round(Math.random()*10 + 1);
+    return id.toString();
+}
 
 const roomToJson = (room: Room | undefined) => {
     let roomJson = <roomJsonObj>{};
@@ -76,41 +76,42 @@ const io: socketio.Server = new socketio.Server(server, {
 });
 io.attach(server);
 
-app.get('/hello', async (_: Request, res: Response) => {
-    res.send('Hello World')
+app.get('/ping', async (_: Request, res: Response) => {
+    res.send('pong')
 });
 
 io.on('connection', (socket: socketio.Socket) => {
+    socket.on('create_room', (gameId: string) => {
+        console.log(`creating new ${gameId} game room`);
+        const room_id = generateRoomId();
+        roomMap.set(room_id, new Room(room_id));
+        socket.emit('room_created', room_id);
+    })
     socket.on('join_room', (param: connectionParams) => {
         const { room_id } = param;
         let username = "player";
         if (roomMap.has(room_id)) {
-            let i = 1;
+            let i = 0;
             while (roomMap.get(room_id)?.players.has(username + i)) i++;
             username += i;
             roomMap.get(room_id)?.addPlayer(new Player(username, socket.id));
+            console.log(`user ${username} joined room ${room_id}`);
+            playerUidMap.set(socket.id, { room_id, username });
+            socket.join(room_id);
+            socket.emit("joined_room", username);
+            io.in(room_id).emit('room_update', roomToJson(roomMap.get(room_id)));
+            printRoomMap();
         }
-        else {
-            username = "player0";
-            console.log(`creating new room ${room_id}`);
-            roomMap.set(room_id, new Room(room_id, new Player(username, socket.id, true)))
-        }
-        console.log(`user ${username} joined room ${room_id}`);
-        playerUidMap.set(socket.id, { room_id, username });
-        socket.join(room_id);
-        socket.emit("joined_room", username);
-        io.in(room_id).emit('room_update', roomToJson(roomMap.get(room_id)));
-        printRoomMap();
     })
 
-    socket.on('message', (messageObj: messageParams) => {
-        const { room_id, username, content } = messageObj;
+    socket.on('message', (param: messageParams) => {
+        const { room_id, username, content } = param;
         io.in(room_id).emit('new_message', { username, content });
         console.log(`new_message from ${username} in room ${room_id}: ${content}`);
     })
 
-    socket.on('update_username', (updateUsernameObj: updateUsernameParams) => {
-        const { room_id, username, newUsername } = updateUsernameObj;
+    socket.on('update_username', (param: updateUsernameParams) => {
+        const { room_id, username, newUsername } = param;
         const newUsernameAdjusted = roomMap.get(room_id)?.updatePlayerUsername(username, newUsername);
         playerUidMap.set(socket.id, { username: newUsernameAdjusted || "error", room_id: room_id });
         socket.emit('username_updated', newUsernameAdjusted);
