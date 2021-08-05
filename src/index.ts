@@ -17,13 +17,16 @@ app.get('/ping', async (_: Request, res: Response) => {
 });
 
 io.on('connection', (socket: socketio.Socket) => {
+    // GENERAL Connections
     socket.on('create_room', (gameId: string) => handle_create_room(gameId, socket, admin));
     socket.on('join_room', (param) => handle_join_room(param, io, socket, admin));
     socket.on('message', (param) => handle_message(param, io));
     socket.on('update_username', (param) => handle_update_username(param, io, socket, admin));
     socket.on('disconnect', () => handle_disconnect(io, socket, admin));
+
+    // GAME Connections
+    // Bomb Squad
+    // socket.on('bomb-squad', (param: any) => )
 });
 
-server.listen(port, () => {
-    console.log(`> Ready on http://localhost:${port}`);
-});
+server.listen(port, () => { console.log(`> Ready on http://localhost:${port}`) });

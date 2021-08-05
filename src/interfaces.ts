@@ -16,6 +16,7 @@ export interface PlayerObj {
   admin: boolean;
 }
 export interface roomJsonObj {
+  gameType: string;
   totalPlayers: number;
   players: Array<PlayerObj>;
 }

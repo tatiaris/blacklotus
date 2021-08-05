@@ -1,3 +1,5 @@
+import { BombsquadRoom } from "./games/bombsquad";
+import { TheMindRoom } from "./games/themind";
 import { Player } from "./player";
 import { Room } from "./room";
 
@@ -15,8 +17,26 @@ export class Admin {
     this.roomMap = new Map<string, Room>();
   }
 
-  createNewRoom(room_id: string) {
-    this.roomMap.set(room_id, new Room(room_id));
+  getRoom(room_id: string) {
+    return this.roomMap.get(room_id);
+  }
+
+  getRoomGameType(room_id: string) {
+    return this.roomMap.get(room_id)?.getGameType();
+  }
+
+  createNewRoom(room_id: string, gameType: string) {
+    switch (gameType) {
+      case "bomb-squad":
+        this.roomMap.set(room_id, new BombsquadRoom(room_id, gameType));
+        break;
+      case "the-mind":
+        this.roomMap.set(room_id, new TheMindRoom(room_id, gameType));
+        break;
+      default:
+        this.roomMap.set(room_id, new Room(room_id, gameType));
+        break;
+    }
   }
 
   addPlayerToRoom(room_id: string, username: string, uid: string) {
@@ -24,7 +44,7 @@ export class Admin {
     this.playerUidMap.set(uid, { room_id, username });
   }
 
-  removePlaterFromRoom(room_id: string, username: string, uid: string) {
+  removePlayerFromRoom(room_id: string, username: string, uid: string) {
     this.roomMap.get(room_id)?.removePlayer(username);
     if (this.roomMap.get(room_id)?.isEmpty()) {
         this.roomMap.delete(room_id)
@@ -44,7 +64,7 @@ export class Admin {
     console.log("************  Rooms Status END  ************")
   }
 
-  toString = () => {
+  toString() {
     return `Admin`;
   }
 }

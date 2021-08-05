@@ -2,22 +2,25 @@ export class Player {
   username: string;
   uid: string;
   admin: boolean;
+  stats: object;
 
   constructor(username: string, uid: string, admin: boolean=false) {
     this.username = username;
     this.uid = uid;
     this.admin = admin;
+    this.stats = {};
   }
 
-  getUid = () => this.uid
-  setUid = (newUid: string) => { this.uid = newUid }
+  getUid() { return this.uid }
+  setUid(newUid: string) { this.uid = newUid }
 
-  getUsername = () => this.username
-  setUsername = (newUsername: string) => { this.username = newUsername }
+  getUsername() { return this.username }
+  setUsername(newUsername: string) { this.username = newUsername }
 
-  isAdmin = () => this.admin;
+  isAdmin() { return this.admin }
+  makeAdmin() { this.admin = true; }
 
-  toString = () => {
+  toString() {
     return `\nName: ${this.username}\nUID: ${this.uid}\n`;
   }
 }
