@@ -1,7 +1,6 @@
 import * as socketio from 'socket.io';
 import { Admin } from 'src/classes/admin';
-import { Room } from 'src/classes/room';
-import { connectionParams, messageParams, roomJsonObj, updateUsernameParams } from 'src/interfaces';
+import { connectionParams, messageParams, updateUsernameParams } from 'src/interfaces';
 
 const generateRoomId = (admin: Admin) => {
   let id = 1000 + Math.round(Math.random()*100);
@@ -16,22 +15,6 @@ const getUniqueUsername = (admin: Admin, room_id: string) => {
   return username + i;
 }
 
-const roomToJson = (room: Room | undefined) => {
-    let roomJson = <roomJsonObj>{};
-    if (room){
-      roomJson.gameType = room.getGameType();
-      roomJson.totalPlayers = room.getTotalPlayers();
-      roomJson.players = [];
-      room.getPlayers().forEach(player => {
-          roomJson.players.push({
-              username: player.getUsername(),
-              admin: player.isAdmin()
-          })
-      })
-    }
-    return roomJson;
-}
-
 export const handle_create_room = (param: string, socket: socketio.Socket, admin: Admin) => {
   console.log(`creating new ${param} game room`);
   const room_id = generateRoomId(admin);
@@ -43,11 +26,11 @@ export const handle_join_room = (param: connectionParams, io: socketio.Server, s
   const { room_id } = param;
   if (admin.roomMap.has(room_id)) {
     const username = getUniqueUsername(admin, room_id);
-    admin.addPlayerToRoom(room_id, username, socket.id)
+    admin.addPlayerToRoom(room_id, username, socket.id);
     console.log(`user ${username} added to room ${room_id}`);
     socket.join(room_id);
-    socket.emit("joined_room", { username: username, gameType: admin.getRoomGameType(room_id) });
-    io.in(room_id).emit('room_update', roomToJson(admin.getRoom(room_id)));
+    socket.emit("joined_room", { userInfo: admin.getRoom(room_id)?.getPlayer(username).getInfo(), gameType: admin.getRoomGameType(room_id) });
+    io.in(room_id).emit('room_update', admin.getRoom(room_id)?.toJson());
     admin.printRoomMap();
   }
 }
@@ -62,8 +45,14 @@ export const handle_update_username = (param: updateUsernameParams, io: socketio
   const { room_id, username, newUsername } = param;
   const newUsernameAdjusted = admin.updatePlayerUsername(room_id, username, newUsername, socket.id);
   socket.emit('username_updated', newUsernameAdjusted);
-  io.in(room_id).emit('room_update', roomToJson(admin.getRoom(room_id)));
+  io.in(room_id).emit('room_update', admin.getRoom(room_id)?.toJson());
   admin.printRoomMap();
+}
+
+export const handle_kick_player = (param: updateUsernameParams, io: socketio.Server, socket: socketio.Socket, admin: Admin) => {
+  const { room_id, username } = param;
+  io.to(admin.getSocketId(room_id, username)).emit('you_are_kicked');
+  socket.emit('user_kicked', username);
 }
 
 export const handle_disconnect = (io: socketio.Server, socket: socketio.Socket, admin: Admin) => {
@@ -74,6 +63,6 @@ export const handle_disconnect = (io: socketio.Server, socket: socketio.Socket, 
       admin.removePlayerFromRoom(room_id, username, playerUid);
       console.log(`removed ${username} from room ${room_id}`);
       admin.printRoomMap();
-      io.in(room_id).emit('room_update', roomToJson(admin.getRoom(room_id)));
+      io.in(room_id).emit('room_update', admin.getRoom(room_id)?.toJson());
   }
 }

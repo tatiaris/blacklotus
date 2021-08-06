@@ -13,4 +13,8 @@ export class TheMindRoom extends Room {
     super.addPlayer(newPlayer);
     this.currentPlayer = getRandomKey(this.players);
   };
+
+  startGame() {
+    super.startGame();
+  }
 }

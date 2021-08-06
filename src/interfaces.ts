@@ -11,12 +11,18 @@ export interface updateUsernameParams {
   username: string;
   newUsername: string;
 }
+export interface removePlayerParams {
+  room_id: string;
+  username: string;
+}
 export interface PlayerObj {
   username: string;
+  picString: string;
   admin: boolean;
 }
 export interface roomJsonObj {
   gameType: string;
   totalPlayers: number;
-  players: Array<PlayerObj>;
+  players: Record<string, PlayerObj>;
+  spectators: Record<string, PlayerObj>;
 }

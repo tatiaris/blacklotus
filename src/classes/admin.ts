@@ -17,6 +17,10 @@ export class Admin {
     this.roomMap = new Map<string, Room>();
   }
 
+  getSocketId(room_id: string, username: string): string {
+    return this.roomMap.get(room_id)?.getPlayer(username).getUid() || "error_uid";
+  }
+
   getRoom(room_id: string) {
     return this.roomMap.get(room_id);
   }
