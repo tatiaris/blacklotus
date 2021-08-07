@@ -13,6 +13,7 @@ export class Room {
   gameType: string;
   gameInProgress: boolean;
   lastActive: Date;
+  publicGameData: any;
 
   constructor(uid: string, gameType: string, initialPlayer?: Player) {
     this.#uid = uid;

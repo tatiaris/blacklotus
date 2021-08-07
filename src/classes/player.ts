@@ -12,6 +12,7 @@ export class Player {
   admin: boolean;
   stats: object;
   picString: string;
+  privateGameData: any;
 
   constructor(username: string, uid: string, admin: boolean=false) {
     this.username = username;
@@ -19,6 +20,7 @@ export class Player {
     this.admin = admin;
     this.stats = {};
     this.picString = generatePicString();
+    this.privateGameData = {};
   }
 
   getUid() { return this.uid }
@@ -32,6 +34,9 @@ export class Player {
 
   isAdmin() { return this.admin }
   makeAdmin() { this.admin = true; }
+
+  getPrivateGameData() { return this.privateGameData }
+  setPrivateGameData(updatedPrivateGameData: any) { this.privateGameData = updatedPrivateGameData }
 
   getInfo() {
     return {
