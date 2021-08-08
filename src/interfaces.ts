@@ -25,4 +25,20 @@ export interface roomJsonObj {
   totalPlayers: number;
   players: Record<string, PlayerObj>;
   spectators: Record<string, PlayerObj>;
+  inProgress: boolean;
+}
+
+// The Mind interfaces
+
+export interface theMindPrivateData {
+  cards: Array<number>;
+}
+export interface theMindPublicData {
+  level: number;
+  totalPlayers: number;
+  totalLevels: 8 | 10 | 12;
+  totalCards: number;
+  cardsRemaining: number;
+  livesRemaining: number;
+  cardsPlayedList: Array<number>;
 }

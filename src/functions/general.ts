@@ -66,3 +66,9 @@ export const handle_disconnect = (io: socketio.Server, socket: socketio.Socket, 
       io.in(room_id).emit('room_update', admin.getRoom(room_id)?.toJson());
   }
 }
+
+export const handle_start_game = (param: updateUsernameParams, io: socketio.Server, admin: Admin) => {
+  const { room_id } = param;
+  admin.getRoom(room_id)?.startGame();
+  io.in(room_id).emit('game_has_started', admin.getRoom(room_id)?.getPublicData());
+}

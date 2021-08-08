@@ -7,7 +7,6 @@ export class BombsquadRoom extends Room {
   constructor(uid: string, gameType: string, initialPlayer?: Player) {
     super(uid, gameType, initialPlayer);
     this.currentPlayer = initialPlayer?.getUsername();
-    this.publicGameData = {}
   };
 
   addPlayer(newPlayer: Player) {

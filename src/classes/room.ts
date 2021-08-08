@@ -13,7 +13,7 @@ export class Room {
   gameType: string;
   gameInProgress: boolean;
   lastActive: Date;
-  publicGameData: any;
+  maxPlayers: number;
 
   constructor(uid: string, gameType: string, initialPlayer?: Player) {
     this.#uid = uid;
@@ -22,6 +22,7 @@ export class Room {
     this.spectators = new Map<string, Player>();
     this.gameInProgress = false;
     this.lastActive = new Date();
+    this.maxPlayers = 24;
     if (initialPlayer) this.players.set(initialPlayer.getUsername(), initialPlayer);
   }
 
@@ -49,8 +50,8 @@ export class Room {
   getPlayers() { return this.players }
   addPlayer(newPlayer: Player) {
     if (this.isEmpty()) newPlayer.makeAdmin();
-    if (!this.gameInProgress) this.players.set(newPlayer.getUsername(), newPlayer);
-    else this.spectators.set(newPlayer.getUsername(), newPlayer);
+    if (this.gameInProgress || this.players.size >= this.maxPlayers) this.spectators.set(newPlayer.getUsername(), newPlayer);
+    else this.players.set(newPlayer.getUsername(), newPlayer);
     this.updateLastActive();
   }
   removePlayer(playerId: string) {
@@ -70,6 +71,8 @@ export class Room {
   getTotalPlayers() { return this.players.size }
 
   updateLastActive() { this.lastActive = new Date() }
+
+  getPublicData() { return {} }
 
   toJson() {
     let roomJson = <roomJsonObj>{};
@@ -91,6 +94,7 @@ export class Room {
         admin: player.isAdmin()
       }
     })
+    roomJson.inProgress = this.isGameInProgress();
     return roomJson;
   }
 
