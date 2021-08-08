@@ -57,6 +57,7 @@ export class TheMindRoom extends Room {
         privateCards.push(cards[0]);
         cards.shift();
       }
+      console.log(`cards for player ${p.getUsername()}: ${privateCards.toString()}`);
       p.setPrivateGameDataValue('cards', privateCards.sort())
     })
   }
