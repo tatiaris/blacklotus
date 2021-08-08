@@ -7,6 +7,15 @@ const getMindLevels = (p: number) => {
   return 8;
 }
 
+const getShuffledNValues = (n: number) => {
+  let arr = [];
+  while(arr.length < n){
+    let r = Math.floor(Math.random() * 100) + 1;
+    if(arr.indexOf(r) === -1) arr.push(r);
+  }
+  return arr;
+}
+
 export class TheMindRoom extends Room {
   level: number;
   totalLevels: 8 | 10 | 12;
@@ -32,11 +41,34 @@ export class TheMindRoom extends Room {
   }
 
   setup() {
+    // set up public info
     this.level = 1;
     this.totalLevels = getMindLevels(this.getTotalPlayers());
     this.totalCards = this.getTotalPlayers() * this.level;
     this.cardsRemaining = this.totalCards;
     this.livesRemaining = this.getTotalPlayers();
     this.cardsPlayedList = [];
+
+    // set up private info for each player
+    let cards = getShuffledNValues(this.totalCards);
+    this.players.forEach(p => {
+      let privateCards = [];
+      for (let i = 0; i < this.level; i++) {
+        privateCards.push(cards[0]);
+        cards.shift();
+      }
+      p.setPrivateGameDataValue('cards', privateCards.sort())
+    })
+  }
+
+  getPublicData() {
+    return {
+      level: this.level,
+      totalLevels: this.totalLevels,
+      totalCards: this.totalCards,
+      cardsRemaining: this.cardsRemaining,
+      livesRemaining: this.livesRemaining,
+      cardsPlayedList: this.cardsPlayedList
+    }
   }
 }

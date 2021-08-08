@@ -1,5 +1,9 @@
-export interface connectionParams {
+export interface roomParams {
   room_id: string;
+}
+export interface identifierParams {
+  room_id: string;
+  username: string;
 }
 export interface messageParams {
   room_id: string;

@@ -32,7 +32,10 @@ export class Room {
   getGameType() { return this.gameType }
   isGameInProgress() { return this.gameInProgress }
   startGame() { this.gameInProgress = true }
-  endGame() { this.gameInProgress = false }
+  endGame() {
+    this.gameInProgress = false
+    this.players.forEach(p => { p.setPrivateGameData({}) })
+  }
 
   getPlayer(id: string): Player { return this.players.get(id) || new Player(id, this.players.get(id)?.getUid() || "error_id") }
   updatePlayerUsername(playerId: string, newPlayerId: string): string {
@@ -45,6 +48,13 @@ export class Room {
     this.players.set(newPlayerId, this.getPlayer(playerId));
     this.players.delete(playerId);
     return newPlayerId;
+  }
+
+  getUsernameFromUID(uid: string) {
+    Object.keys(this.players).map(p => {
+      if (this.players.get(p)?.getUid() === uid) return p;
+    })
+    return "error_username";
   }
 
   getPlayers() { return this.players }

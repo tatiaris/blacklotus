@@ -1,6 +1,6 @@
 import * as socketio from 'socket.io';
 import { Admin } from 'src/classes/admin';
-import { connectionParams, messageParams, updateUsernameParams } from 'src/interfaces';
+import { roomParams, identifierParams, messageParams, updateUsernameParams } from 'src/interfaces';
 
 const generateRoomId = (admin: Admin) => {
   let id = 1000 + Math.round(Math.random()*100);
@@ -22,7 +22,7 @@ export const handle_create_room = (param: string, socket: socketio.Socket, admin
   socket.emit('room_created', room_id);
 }
 
-export const handle_join_room = (param: connectionParams, io: socketio.Server, socket: socketio.Socket, admin: Admin) => {
+export const handle_join_room = (param: roomParams, io: socketio.Server, socket: socketio.Socket, admin: Admin) => {
   const { room_id } = param;
   if (admin.roomMap.has(room_id)) {
     const username = getUniqueUsername(admin, room_id);
@@ -71,4 +71,17 @@ export const handle_start_game = (param: updateUsernameParams, io: socketio.Serv
   const { room_id } = param;
   admin.getRoom(room_id)?.startGame();
   io.in(room_id).emit('game_has_started', admin.getRoom(room_id)?.getPublicData());
+  io.in(room_id).emit('room_update', admin.getRoom(room_id)?.toJson());
+}
+
+export const handle_end_game = (param: roomParams, io: socketio.Server, admin: Admin) => {
+  const { room_id } = param;
+  admin.getRoom(room_id)?.endGame();
+  io.in(room_id).emit('game_has_ended');
+  io.in(room_id).emit('room_update', admin.getRoom(room_id)?.toJson());
+}
+
+export const handle_private_data_request = (param: identifierParams, socket: socketio.Socket, admin: Admin) => {
+  const { room_id, username } = param;
+  socket.emit('private_data_update', admin.getRoom(room_id)?.getPlayer(username).getPrivateGameData());
 }

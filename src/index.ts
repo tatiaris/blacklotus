@@ -3,7 +3,7 @@ import * as http from 'http';
 import * as socketio from 'socket.io';
 import { Admin } from './classes/admin';
 import { socketioConfig } from './constants';
-import { handle_create_room, handle_disconnect, handle_join_room, handle_kick_player, handle_message, handle_start_game, handle_update_username } from './functions/general';
+import { handle_create_room, handle_disconnect, handle_end_game, handle_join_room, handle_kick_player, handle_message, handle_private_data_request, handle_start_game, handle_update_username } from './functions/general';
 
 const port: number = parseInt(process.env.PORT || '8888', 10);
 const admin = new Admin();
@@ -26,7 +26,9 @@ io.on('connection', (socket: socketio.Socket) => {
     socket.on('disconnect', () => handle_disconnect(io, socket, admin));
 
     // GAME Connections
-    socket.on('start_game', (param: any) => handle_start_game(param, io, admin));
+    socket.on('start_game', (param) => handle_start_game(param, io, admin));
+    socket.on('end_game', (param) => handle_end_game(param, io, admin));
+    socket.on('private_data_request', (param) => handle_private_data_request(param, socket, admin))
 });
 
 server.listen(port, () => { console.log(`> Ready on http://localhost:${port}`) });

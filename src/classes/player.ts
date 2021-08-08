@@ -1,5 +1,3 @@
-import { theMindPrivateData } from "src/interfaces";
-
 export function generatePicString() {
   let s = "";
   for (let i = 0; i < 50; i++) {
@@ -14,7 +12,7 @@ export class Player {
   admin: boolean;
   stats: object;
   picString: string;
-  privateGameData: theMindPrivateData | {};
+  privateGameData: any;
 
   constructor(username: string, uid: string, admin: boolean=false) {
     this.username = username;
@@ -39,6 +37,7 @@ export class Player {
 
   getPrivateGameData() { return this.privateGameData }
   setPrivateGameData(updatedPrivateGameData: any) { this.privateGameData = updatedPrivateGameData }
+  setPrivateGameDataValue(key: string, value: any) { this.privateGameData[key] = value }
 
   getInfo() {
     return {
