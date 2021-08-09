@@ -31,6 +31,16 @@ export interface roomJsonObj {
   spectators: Record<string, PlayerObj>;
   inProgress: boolean;
 }
+export interface playerActionObj {
+  room_id: string;
+  username: string;
+  actionType: string;
+  actionData: any;
+}
+
+export interface gameRoom {
+  handlePlayerAction: Function;
+}
 
 // The Mind interfaces
 

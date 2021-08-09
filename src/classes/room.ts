@@ -14,6 +14,7 @@ export class Room {
   gameInProgress: boolean;
   lastActive: Date;
   maxPlayers: number;
+  minPlayers: number;
 
   constructor(uid: string, gameType: string, initialPlayer?: Player) {
     this.#uid = uid;
@@ -23,6 +24,7 @@ export class Room {
     this.gameInProgress = false;
     this.lastActive = new Date();
     this.maxPlayers = 24;
+    this.minPlayers = 2;
     if (initialPlayer) this.players.set(initialPlayer.getUsername(), initialPlayer);
   }
 
@@ -98,7 +100,7 @@ export class Room {
     })
     roomJson.spectators = {};
     this.getSpectators().forEach(player => {
-      roomJson.players[player.getUsername()] = {
+      roomJson.spectators[player.getUsername()] = {
         username: player.getUsername(),
         picString: player.getPicString(),
         admin: player.isAdmin()
@@ -112,5 +114,9 @@ export class Room {
     let playersToString = "";
     this.players.forEach((p) => { playersToString += p.toString() })
     return `\nROOM ${this.#uid}\nGame: development\nPlayers:\n${playersToString}\n`;
+  }
+
+  handlePlayerAction(username: string, actionType: string, actionData: any) {
+    console.log(username, actionType, actionData);
   }
 }

@@ -1,6 +1,6 @@
 import * as socketio from 'socket.io';
 import { Admin } from 'src/classes/admin';
-import { roomParams, identifierParams, messageParams, updateUsernameParams } from 'src/interfaces';
+import { roomParams, identifierParams, messageParams, updateUsernameParams, playerActionObj } from 'src/interfaces';
 
 const generateRoomId = (admin: Admin) => {
   let id = 1000 + Math.round(Math.random()*100);
@@ -31,6 +31,7 @@ export const handle_join_room = (param: roomParams, io: socketio.Server, socket:
     socket.join(room_id);
     socket.emit("joined_room", { userInfo: admin.getRoom(room_id)?.getPlayer(username).getInfo(), gameType: admin.getRoomGameType(room_id) });
     io.in(room_id).emit('room_update', admin.getRoom(room_id)?.toJson());
+    io.in(room_id).emit('new_message', { username: "server", content: `${username} has joined the room!` });
     admin.printRoomMap();
   }
 }
@@ -46,12 +47,14 @@ export const handle_update_username = (param: updateUsernameParams, io: socketio
   const newUsernameAdjusted = admin.updatePlayerUsername(room_id, username, newUsername, socket.id);
   socket.emit('username_updated', newUsernameAdjusted);
   io.in(room_id).emit('room_update', admin.getRoom(room_id)?.toJson());
+  io.in(room_id).emit('new_message', { username: "server", content: `${username} updated their name to ${newUsernameAdjusted}` });
   admin.printRoomMap();
 }
 
 export const handle_kick_player = (param: updateUsernameParams, io: socketio.Server, socket: socketio.Socket, admin: Admin) => {
   const { room_id, username } = param;
   io.to(admin.getSocketId(room_id, username)).emit('you_are_kicked');
+  io.in(room_id).emit('new_message', { username: "server", content: `${username} has been kicked.` });
   socket.emit('user_kicked', username);
 }
 
@@ -64,14 +67,21 @@ export const handle_disconnect = (io: socketio.Server, socket: socketio.Socket, 
       console.log(`removed ${username} from room ${room_id}`);
       admin.printRoomMap();
       io.in(room_id).emit('room_update', admin.getRoom(room_id)?.toJson());
+      io.in(room_id).emit('new_message', { username: "server", content: `Goodbye ${username}.` });
   }
 }
 
 export const handle_start_game = (param: updateUsernameParams, io: socketio.Server, admin: Admin) => {
   const { room_id } = param;
   admin.getRoom(room_id)?.startGame();
-  io.in(room_id).emit('game_has_started', admin.getRoom(room_id)?.getPublicData());
-  io.in(room_id).emit('room_update', admin.getRoom(room_id)?.toJson());
+  if (admin.getRoom(room_id)?.gameInProgress) {
+    io.in(room_id).emit('public_data_update', admin.getRoom(room_id)?.getPublicData());
+    io.in(room_id).emit('room_update', admin.getRoom(room_id)?.toJson());
+    io.in(room_id).emit('new_message', { username: "server", content: "The game has started!" });
+  }
+  else {
+    io.in(room_id).emit('new_message', { username: "server", content: "Could not start game. Please make sure you have enough players in the room." });
+  }
 }
 
 export const handle_end_game = (param: roomParams, io: socketio.Server, admin: Admin) => {
@@ -79,9 +89,16 @@ export const handle_end_game = (param: roomParams, io: socketio.Server, admin: A
   admin.getRoom(room_id)?.endGame();
   io.in(room_id).emit('game_has_ended');
   io.in(room_id).emit('room_update', admin.getRoom(room_id)?.toJson());
+  io.in(room_id).emit('new_message', { username: "server", content: "The game has ended." });
 }
 
 export const handle_private_data_request = (param: identifierParams, socket: socketio.Socket, admin: Admin) => {
   const { room_id, username } = param;
   socket.emit('private_data_update', admin.getRoom(room_id)?.getPlayer(username).getPrivateGameData());
+}
+
+export const handle_player_action = (param: playerActionObj, io: socketio.Server, admin: Admin) => {
+  const { room_id, username, actionType, actionData } = param;
+  admin.getRoom(room_id)?.handlePlayerAction(username, actionType, actionData);
+  io.in(room_id).emit('public_data_update', admin.getRoom(room_id)?.getPublicData());
 }

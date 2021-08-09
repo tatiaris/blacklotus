@@ -36,13 +36,15 @@ export class TheMindRoom extends Room {
   };
 
   startGame() {
-    super.startGame();
-    this.setup();
+    if (this.players.size >= this.minPlayers) {
+      super.startGame();
+      this.setup();
+    }
   }
 
   setup() {
     // set up public info
-    this.level = 1;
+    this.level = 5;
     this.totalLevels = getMindLevels(this.getTotalPlayers());
     this.totalCards = this.getTotalPlayers() * this.level;
     this.cardsRemaining = this.totalCards;
@@ -57,7 +59,6 @@ export class TheMindRoom extends Room {
         privateCards.push(cards[0]);
         cards.shift();
       }
-      console.log(`cards for player ${p.getUsername()}: ${privateCards.toString()}`);
       p.setPrivateGameDataValue('cards', privateCards.sort())
     })
   }
@@ -70,6 +71,38 @@ export class TheMindRoom extends Room {
       cardsRemaining: this.cardsRemaining,
       livesRemaining: this.livesRemaining,
       cardsPlayedList: this.cardsPlayedList
+    }
+  }
+
+  handlePlayerAction(username: string, actionType: string, actionData: any) {
+    switch (actionType) {
+      case "play_lowest_card":
+        this.handlePlayLowestCard(username)
+        break;
+      default:
+        console.log(username, actionType, actionData);
+        break;
+    }
+  }
+
+  handlePlayLowestCard(username: string) {
+    let playerCards: Array<number> = this.getPlayer(username).getPrivateGameDataValue('cards');
+    if (playerCards.length > 0) {
+      let lifeLost = false;
+      const cardPlayed = playerCards.shift() || -1;
+      this.cardsPlayedList.push(cardPlayed);
+      this.cardsRemaining--;
+      this.players.forEach(p => {
+        let otherPlayerCards: Array<number> = p.getPrivateGameDataValue('cards');
+        if (cardPlayed > otherPlayerCards[0]) lifeLost = true;
+        while (otherPlayerCards.length > 0 && cardPlayed > otherPlayerCards[0]) {
+          this.cardsPlayedList.push(otherPlayerCards.shift() || -1);
+          this.cardsRemaining--;
+        }
+        p.setPrivateGameDataValue('cards', otherPlayerCards);
+      })
+      if (lifeLost) this.livesRemaining--;
+      this.getPlayer(username).setPrivateGameDataValue('cards', playerCards);
     }
   }
 }

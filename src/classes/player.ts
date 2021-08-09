@@ -37,6 +37,7 @@ export class Player {
 
   getPrivateGameData() { return this.privateGameData }
   setPrivateGameData(updatedPrivateGameData: any) { this.privateGameData = updatedPrivateGameData }
+  getPrivateGameDataValue(key: string) { return this.privateGameData[key] }
   setPrivateGameDataValue(key: string, value: any) { this.privateGameData[key] = value }
 
   getInfo() {
