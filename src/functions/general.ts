@@ -33,6 +33,8 @@ export const handle_join_room = (param: roomParams, io: socketio.Server, socket:
     io.in(room_id).emit('room_update', admin.getRoom(room_id)?.toJson());
     io.in(room_id).emit('new_message', { username: "server", content: `${username} has joined the room!` });
     admin.printRoomMap();
+  } else {
+    socket.emit('room_not_found')
   }
 }
 

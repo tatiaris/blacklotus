@@ -1,0 +1,33 @@
+@startuml Player
+!theme resume-light
+
+class Player {
+  -String uid
+  +String username
+  +Boolean admin
+  +String picString
+  +Object privateGameData
+  
+  +String getUid()
+  +void setUid()
+
+  +String getUsername()
+  +void setUsername()
+
+  +String getPicString()
+  +void resetPicString()
+
+  +Boolean isAdmin()
+  +void makeAdmin()
+
+  +Object getPrivateGameData()
+  +void setPrivateGameData()
+
+  +Object getPrivateGameDataValue()
+  +void setPrivateGameDataValue()
+
+  +Object getInfo()
+  +String toString()
+}
+
+@enduml

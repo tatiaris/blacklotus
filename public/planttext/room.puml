@@ -1,0 +1,43 @@
+@startuml Room
+!theme resume-light
+
+class Room {
+  -String uid
+  +Map<string, Player> players
+  +Map<string, Player> spectators
+  +String gameType
+  +Boolean gameInProgress
+  +Date lastActive
+  +Int maxPlayers
+  +Int minPlayers
+  
+  +String getUid()
+  +void setUid()
+
+  +String getGameType()
+  +Boolean isGameInProgress()
+  +void startGame()
+  +void endGame()
+
+  +Player getPlayer()
+  +void updatePlayerUsername()
+  +String getUsernameFromUID()
+
+  +Array<Player> getPlayers()
+  +void addPlayer()
+  +void removePlayer()
+
+  +Array<Player> getSpectators()
+
+  +Boolean isEmpty()
+  +Int getTotalPlayers()
+
+  +void handlePlayerAction()
+
+  +void updateLastActive()
+  +Object getPublicData()
+  +Object toJson()
+  +String toString()
+}
+
+@enduml
