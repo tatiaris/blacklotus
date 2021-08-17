@@ -1,5 +1,5 @@
 import { Player } from "../player";
-import { getRandomKey, Room } from "../room";
+import { Room } from "../room";
 
 export class BombsquadRoom extends Room {
   currentPlayer: string | undefined;
@@ -9,9 +9,8 @@ export class BombsquadRoom extends Room {
     this.currentPlayer = initialPlayer?.getUsername();
   };
 
-  addPlayer(newPlayer: Player) {
-    super.addPlayer(newPlayer);
-    this.currentPlayer = getRandomKey(this.players);
+  addUser(newPlayer: Player) {
+    super.addUser(newPlayer);
   };
 
   startGame() {

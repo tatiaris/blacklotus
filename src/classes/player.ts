@@ -9,15 +9,13 @@ export function generatePicString() {
 export class Player {
   username: string;
   uid: string;
-  admin: boolean;
   stats: object;
   picString: string;
   privateGameData: any;
 
-  constructor(username: string, uid: string, admin: boolean=false) {
+  constructor(username: string, uid: string) {
     this.username = username;
     this.uid = uid;
-    this.admin = admin;
     this.stats = {};
     this.picString = generatePicString();
     this.privateGameData = {};
@@ -32,9 +30,6 @@ export class Player {
   getPicString() { return this.picString }
   resetPicString() { this.picString = generatePicString() }
 
-  isAdmin() { return this.admin }
-  makeAdmin() { this.admin = true; }
-
   getPrivateGameData() { return this.privateGameData }
   setPrivateGameData(updatedPrivateGameData: any) { this.privateGameData = updatedPrivateGameData }
   getPrivateGameDataValue(key: string) { return this.privateGameData[key] }
@@ -43,8 +38,7 @@ export class Player {
   getInfo() {
     return {
       username: this.username,
-      picString: this.picString,
-      admin: this.admin
+      picString: this.picString
     }
   }
 

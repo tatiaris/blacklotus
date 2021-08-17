@@ -22,11 +22,11 @@ export interface removePlayerParams {
 export interface PlayerObj {
   username: string;
   picString: string;
-  admin: boolean;
 }
 export interface roomJsonObj {
   gameType: string;
   totalPlayers: number;
+  currentAdmin: string;
   players: Record<string, PlayerObj>;
   spectators: Record<string, PlayerObj>;
   inProgress: boolean;

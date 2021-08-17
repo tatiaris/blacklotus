@@ -3,17 +3,17 @@ import { TheMindRoom } from "./games/themind";
 import { Player } from "./player";
 import { Room } from "./room";
 
-interface playerInfoParams {
+interface userInfoParams {
   room_id: string;
   username: string;
 }
 
 export class Admin {
-  playerUidMap: Map<string, playerInfoParams>;
+  userUidMap: Map<string, userInfoParams>;
   roomMap: Map<string, Room>;
 
   constructor() {
-    this.playerUidMap = new Map<string, playerInfoParams>();
+    this.userUidMap = new Map<string, userInfoParams>();
     this.roomMap = new Map<string, Room>();
   }
 
@@ -43,22 +43,22 @@ export class Admin {
     }
   }
 
-  addPlayerToRoom(room_id: string, username: string, uid: string) {
-    this.roomMap.get(room_id)?.addPlayer(new Player(username, uid));
-    this.playerUidMap.set(uid, { room_id, username });
+  addUserToRoom(room_id: string, username: string, uid: string) {
+    this.roomMap.get(room_id)?.addUser(new Player(username, uid));
+    this.userUidMap.set(uid, { room_id, username });
   }
 
-  removePlayerFromRoom(room_id: string, username: string, uid: string) {
-    this.roomMap.get(room_id)?.removePlayer(username);
+  removeUserFromRoom(room_id: string, username: string, uid: string) {
+    this.roomMap.get(room_id)?.removeUser(username);
     if (this.roomMap.get(room_id)?.isEmpty()) {
         this.roomMap.delete(room_id)
     }
-    this.playerUidMap.delete(uid)
+    this.userUidMap.delete(uid)
   }
 
   updatePlayerUsername(room_id: string, username: string, newUsername: string, uid: string) {
     const newUsernameAdjusted = this.roomMap.get(room_id)?.updatePlayerUsername(username, newUsername);
-    this.playerUidMap.set(uid, { username: newUsernameAdjusted || "error", room_id });
+    this.userUidMap.set(uid, { username: newUsernameAdjusted || "error", room_id });
     return newUsernameAdjusted;
   }
 

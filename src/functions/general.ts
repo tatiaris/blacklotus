@@ -26,12 +26,12 @@ export const handle_join_room = (param: roomParams, io: socketio.Server, socket:
   const { room_id } = param;
   if (admin.roomMap.has(room_id)) {
     const username = getUniqueUsername(admin, room_id);
-    admin.addPlayerToRoom(room_id, username, socket.id);
+    admin.addUserToRoom(room_id, username, socket.id);
     console.log(`user ${username} added to room ${room_id}`);
     socket.join(room_id);
     socket.emit("joined_room", { userInfo: admin.getRoom(room_id)?.getPlayer(username).getInfo(), gameType: admin.getRoomGameType(room_id) });
     io.in(room_id).emit('room_update', admin.getRoom(room_id)?.toJson());
-    io.in(room_id).emit('new_message', { username: "server", content: `${username} has joined the room!` });
+    io.in(room_id).emit('notification', { content: `${username} has joined the room!`, type: 'success' });
     admin.printRoomMap();
   } else {
     socket.emit('room_not_found')
@@ -41,7 +41,6 @@ export const handle_join_room = (param: roomParams, io: socketio.Server, socket:
 export const handle_message = (param: messageParams, io: socketio.Server) => {
   const { room_id, username, content } = param;
   io.in(room_id).emit('new_message', { username, content });
-  console.log(`new_message from ${username} in room ${room_id}: ${content}`);
 }
 
 export const handle_update_username = (param: updateUsernameParams, io: socketio.Server, socket: socketio.Socket, admin: Admin) => {
@@ -53,23 +52,23 @@ export const handle_update_username = (param: updateUsernameParams, io: socketio
   admin.printRoomMap();
 }
 
-export const handle_kick_player = (param: updateUsernameParams, io: socketio.Server, socket: socketio.Socket, admin: Admin) => {
+export const handle_kick_user = (param: updateUsernameParams, io: socketio.Server, socket: socketio.Socket, admin: Admin) => {
   const { room_id, username } = param;
   io.to(admin.getSocketId(room_id, username)).emit('you_are_kicked');
-  io.in(room_id).emit('new_message', { username: "server", content: `${username} has been kicked.` });
+  io.in(room_id).emit('notification', { content: `${username} has been kicked.`, type: 'danger' });
   socket.emit('user_kicked', username);
 }
 
 export const handle_disconnect = (io: socketio.Server, socket: socketio.Socket, admin: Admin) => {
   const playerUid = socket.id;
-  if (admin.playerUidMap.get(playerUid)) {
-      const room_id = admin.playerUidMap.get(playerUid)?.room_id || "";
-      const username = admin.playerUidMap.get(playerUid)?.username || "";
-      admin.removePlayerFromRoom(room_id, username, playerUid);
+  if (admin.userUidMap.get(playerUid)) {
+      const room_id = admin.userUidMap.get(playerUid)?.room_id || "";
+      const username = admin.userUidMap.get(playerUid)?.username || "";
+      admin.removeUserFromRoom(room_id, username, playerUid);
       console.log(`removed ${username} from room ${room_id}`);
       admin.printRoomMap();
       io.in(room_id).emit('room_update', admin.getRoom(room_id)?.toJson());
-      io.in(room_id).emit('new_message', { username: "server", content: `Goodbye ${username}.` });
+      io.in(room_id).emit('notification', { content: `${username} has disconnected.`, type: 'danger' });
   }
 }
 
@@ -79,7 +78,7 @@ export const handle_start_game = (param: updateUsernameParams, io: socketio.Serv
   if (admin.getRoom(room_id)?.gameInProgress) {
     io.in(room_id).emit('public_data_update', admin.getRoom(room_id)?.getPublicData());
     io.in(room_id).emit('room_update', admin.getRoom(room_id)?.toJson());
-    io.in(room_id).emit('new_message', { username: "server", content: "The game has started!" });
+    io.in(room_id).emit('notification', { content: "The game has started!", type: 'success' });
   }
   else {
     io.in(room_id).emit('new_message', { username: "server", content: "Could not start game. Please make sure you have enough players in the room." });
@@ -91,7 +90,7 @@ export const handle_end_game = (param: roomParams, io: socketio.Server, admin: A
   admin.getRoom(room_id)?.endGame();
   io.in(room_id).emit('game_has_ended');
   io.in(room_id).emit('room_update', admin.getRoom(room_id)?.toJson());
-  io.in(room_id).emit('new_message', { username: "server", content: "The game has ended." });
+  io.in(room_id).emit('notification', { content: "The game has ended.", type: 'danger' });
 }
 
 export const handle_private_data_request = (param: identifierParams, socket: socketio.Socket, admin: Admin) => {

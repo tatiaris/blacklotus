@@ -1,13 +1,9 @@
 import { roomJsonObj } from "src/interfaces";
 import { Player } from "./player";
 
-export function getRandomKey(collection: Map<string, Player>) {
-  let keys = Array.from(collection.keys());
-  return keys[Math.floor(Math.random() * keys.length)];
-}
-
 export class Room {
   #uid: string;
+  currentAdmin: string;
   players: Map<string, Player>;
   spectators: Map<string, Player>;
   gameType: string;
@@ -18,6 +14,7 @@ export class Room {
 
   constructor(uid: string, gameType: string, initialPlayer?: Player) {
     this.#uid = uid;
+    this.currentAdmin = '';
     this.gameType = gameType;
     this.players = new Map<string, Player>();
     this.spectators = new Map<string, Player>();
@@ -40,16 +37,17 @@ export class Room {
   }
 
   getPlayer(id: string): Player { return this.players.get(id) || new Player(id, this.players.get(id)?.getUid() || "error_id") }
-  updatePlayerUsername(playerId: string, newPlayerId: string): string {
-    if (this.players.has(newPlayerId)) {
+  updatePlayerUsername(userId: string, newUserId: string): string {
+    if (this.players.has(newUserId)) {
       let i = 1;
-      while (this.players.has(newPlayerId + i)) i++;
-      newPlayerId += i;
+      while (this.players.has(newUserId + i)) i++;
+      newUserId += i;
     }
-    this.players.get(playerId)?.setUsername(newPlayerId);
-    this.players.set(newPlayerId, this.getPlayer(playerId));
-    this.players.delete(playerId);
-    return newPlayerId;
+    this.players.get(userId)?.setUsername(newUserId);
+    this.players.set(newUserId, this.getPlayer(userId));
+    if (this.players.get(userId)?.getUsername() == this.currentAdmin) this.currentAdmin = newUserId;
+    this.players.delete(userId);
+    return newUserId;
   }
 
   getUsernameFromUID(uid: string) {
@@ -59,25 +57,48 @@ export class Room {
     return "error_username";
   }
 
+  assignRandomAdmin() {
+    if (this.players.size > 0) {
+      this.currentAdmin = Array.from(this.players.keys())[0];
+    }
+    else if (this.spectators.size > 0) {
+      this.currentAdmin = Array.from(this.spectators.keys())[0];
+    }
+  }
+
   getPlayers() { return this.players }
-  addPlayer(newPlayer: Player) {
-    if (this.isEmpty()) newPlayer.makeAdmin();
+  addUser(newPlayer: Player) {
+    if (this.isEmpty()){
+      this.currentAdmin = newPlayer.getUsername();
+    }
     if (this.gameInProgress || this.players.size >= this.maxPlayers) this.spectators.set(newPlayer.getUsername(), newPlayer);
     else this.players.set(newPlayer.getUsername(), newPlayer);
     this.updateLastActive();
   }
-  removePlayer(playerId: string) {
-    if (this.players.get(playerId)?.isAdmin()) {
-      this.players.delete(playerId);
-      this.players.get(getRandomKey(this.players))?.makeAdmin();
+  removePlayer(userId: string) {
+    if (this.players.get(userId)?.getUsername() == this.currentAdmin) {
+      this.players.delete(userId);
+      this.assignRandomAdmin();
+    } else {
+      this.players.delete(userId);
     }
-    else {
-      this.players.delete(playerId);
-    }
-    this.updateLastActive();
   }
 
   getSpectators() { return this.spectators }
+  removeSpectator(userId: string) {
+    if (this.players.get(userId)?.getUsername() == this.currentAdmin) {
+      this.spectators.delete(userId);
+      this.assignRandomAdmin();
+    } else {
+      this.spectators.delete(userId);
+    }
+  }
+
+  removeUser(userId: string) {
+    if (this.players.has(userId)) this.removePlayer(userId);
+    if (this.spectators.has(userId)) this.removeSpectator(userId);
+    this.updateLastActive();
+  }
 
   isEmpty() { return this.players.size === 0 }
   getTotalPlayers() { return this.players.size }
@@ -90,20 +111,19 @@ export class Room {
     let roomJson = <roomJsonObj>{};
     roomJson.gameType = this.gameType;
     roomJson.totalPlayers = this.getTotalPlayers();
+    roomJson.currentAdmin = this.currentAdmin;
     roomJson.players = {};
     this.getPlayers().forEach(player => {
       roomJson.players[player.getUsername()] = {
         username: player.getUsername(),
-        picString: player.getPicString(),
-        admin: player.isAdmin()
+        picString: player.getPicString()
       }
     })
     roomJson.spectators = {};
     this.getSpectators().forEach(player => {
       roomJson.spectators[player.getUsername()] = {
         username: player.getUsername(),
-        picString: player.getPicString(),
-        admin: player.isAdmin()
+        picString: player.getPicString()
       }
     })
     roomJson.inProgress = this.isGameInProgress();
