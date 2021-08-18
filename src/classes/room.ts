@@ -43,9 +43,9 @@ export class Room {
       while (this.players.has(newUserId + i)) i++;
       newUserId += i;
     }
-    this.players.get(userId)?.setUsername(newUserId);
     this.players.set(newUserId, this.getPlayer(userId));
-    if (this.players.get(userId)?.getUsername() == this.currentAdmin) this.currentAdmin = newUserId;
+    this.players.get(newUserId)?.setUsername(newUserId);
+    if (userId == this.currentAdmin) this.currentAdmin = newUserId;
     this.players.delete(userId);
     return newUserId;
   }
